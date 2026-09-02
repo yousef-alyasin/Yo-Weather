@@ -179,3 +179,31 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+# Environment & Secrets
+.env
+
+# PyInstaller / Build outputs
+dist/
+build/
+*.spec
+*.exe
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+
+# User Preferences
+settings.json
+
+# Environments
+venv/
+.venv/
+env/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

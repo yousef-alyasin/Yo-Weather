@@ -1,0 +1,195 @@
+/* Overall Application Theme */
+QWidget#centralWidget {
+    background-color: #0f172a;
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+    color: #ffffff;
+}
+
+/* Search Bar */
+QLineEdit#searchInput {
+    background-color: rgba(30, 41, 59, 0.85);
+    color: #f8fafc;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 14px;
+}
+
+QLineEdit#searchInput:focus {
+    border: 1px solid #38bdf8;
+    background-color: rgba(30, 41, 59, 0.98);
+}
+
+/* Tool Buttons */
+QPushButton#toolBtn, QPushButton#unitToggleBtn {
+    background-color: rgba(30, 41, 59, 0.85);
+    color: #f8fafc;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 8px 14px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+QPushButton#toolBtn:hover, QPushButton#unitToggleBtn:hover {
+    background-color: rgba(56, 189, 248, 0.25);
+    border-color: #38bdf8;
+}
+
+/* Favorite Chips */
+QPushButton.favChip {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #e2e8f0;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    padding: 4px 12px;
+    font-size: 12px;
+}
+
+QPushButton.favChip:hover {
+    background-color: rgba(56, 189, 248, 0.3);
+    color: #ffffff;
+}
+
+/* Cards & Frames */
+QFrame#mainCard, QFrame#card, QFrame#statCard, QFrame#bottomFrame {
+    background-color: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+}
+
+/* Typography */
+QLabel#mainCity {
+    font-size: 22px;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+QLabel#mainTemp {
+    font-size: 58px;
+    font-weight: 800;
+    color: #ffffff;
+}
+
+QLabel#mainSub {
+    font-size: 13px;
+    color: #94a3b8;
+}
+
+QLabel#mainTime {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+
+QLabel#mainWeatherIcon {
+    font-size: 34px;
+}
+
+QLabel#mainCondition {
+    font-size: 16px;
+    font-weight: 600;
+    color: #38bdf8;
+}
+
+/* Stat Cards */
+QLabel#statIcon {
+    font-size: 18px;
+}
+
+QLabel#statTitle {
+    font-size: 13px;
+    font-weight: 600;
+    color: #cbd5e1;
+}
+
+QLabel#statValue {
+    font-size: 20px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+QLabel#statSub {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+/* Hourly Item */
+QFrame#hourlyItem {
+    background-color: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+}
+
+QFrame#hourlyItem:hover {
+    background-color: rgba(56, 189, 248, 0.18);
+    border-color: rgba(56, 189, 248, 0.5);
+}
+
+QLabel#hourTime {
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+QLabel#hourIcon {
+    font-size: 20px;
+}
+
+QLabel#hourTemp {
+    font-size: 15px;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+QLabel#hourRain {
+    font-size: 11px;
+    color: #38bdf8;
+}
+
+/* Daily Rows */
+QFrame#dailyRow {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+QLabel#dailyDay {
+    font-size: 13px;
+    font-weight: 600;
+    color: #f1f5f9;
+}
+
+QLabel#dailyRain {
+    font-size: 12px;
+    color: #38bdf8;
+}
+
+QLabel#dailyIcon {
+    font-size: 16px;
+}
+
+QLabel#dailyCond {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+QLabel#dailyTemp {
+    font-size: 13px;
+    font-weight: 600;
+    color: #f8fafc;
+}
+
+/* Smart Advice Pill */
+#smartAdviceLabel {
+    font-size: 12px;
+    font-weight: 600;
+    color: #fde047;
+    background-color: rgba(250, 204, 21, 0.12);
+    border: 1px solid rgba(250, 204, 21, 0.25);
+    border-radius: 12px;
+    padding: 4px 12px;
+}
+
+/* Status Label */
+QLabel#statusLabel {
+    font-size: 12px;
+    color: #94a3b8;
+}
