@@ -1,64 +1,157 @@
-/* Overall Application Theme */
+QMainWindow {
+    background: transparent;
+}
+
 QWidget#centralWidget {
-    background-color: #0f172a;
-    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+    background-color: #0b1329;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    color: #ffffff;
+    border-radius: 16px;
+}
+
+QLineEdit#searchInput.loading {
+    border: 1px solid rgba(56, 189, 248, 0.8);
+    background-color: rgba(56, 189, 248, 0.08);
+}
+
+QFrame#customTitleBar {
+    background-color: rgba(11, 19, 41, 0.95);
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+QLabel#titleBarText {
+    font-size: 13px;
+    font-weight: 700;
+    color: #e2e8f0;
+    letter-spacing: 0.5px;
+}
+
+QPushButton.titleBtn {
+    background-color: transparent;
+    color: #94a3b8;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    min-width: 36px;
+    max-width: 36px;
+    min-height: 28px;
+    max-height: 28px;
+}
+
+QPushButton.titleBtn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
     color: #ffffff;
 }
 
-/* Search Bar */
-QLineEdit#searchInput {
-    background-color: rgba(30, 41, 59, 0.85);
+QPushButton#titleBtnClose:hover {
+    background-color: #ef4444;
+    color: #ffffff;
+}
+
+QToolTip {
+    background-color: #1e293b;
     color: #f8fafc;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 12px;
-    padding: 10px 14px;
-    font-size: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+QFrame#topBarContainer {
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+    padding: 3px 6px;
+}
+
+QLineEdit#searchInput {
+    background-color: rgba(255, 255, 255, 0.06);
+    color: #f8fafc;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 15px;
+    padding: 9px 16px;
+    font-size: 13px;
+    selection-background-color: #38bdf8;
 }
 
 QLineEdit#searchInput:focus {
-    border: 1px solid #38bdf8;
-    background-color: rgba(30, 41, 59, 0.98);
+    border: 1px solid rgba(56, 189, 248, 0.65);
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Tool Buttons */
-QPushButton#toolBtn, QPushButton#unitToggleBtn {
-    background-color: rgba(30, 41, 59, 0.85);
-    color: #f8fafc;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 12px;
-    padding: 8px 14px;
-    font-size: 14px;
-    font-weight: 600;
-}
-
-QPushButton#toolBtn:hover, QPushButton#unitToggleBtn:hover {
-    background-color: rgba(56, 189, 248, 0.25);
-    border-color: #38bdf8;
-}
-
-/* Favorite Chips */
-QPushButton.favChip {
-    background-color: rgba(255, 255, 255, 0.08);
+QPushButton#toolBtn {
+    background-color: rgba(255, 255, 255, 0.05);
     color: #e2e8f0;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 14px;
-    padding: 4px 12px;
+    min-width: 38px;
+    max-width: 38px;
+    min-height: 38px;
+    max-height: 38px;
+    font-size: 15px;
+}
+
+QPushButton#toolBtn:hover {
+    background-color: rgba(56, 189, 248, 0.2);
+    border-color: rgba(56, 189, 248, 0.5);
+    color: #ffffff;
+}
+
+QPushButton#toolBtn:pressed {
+    background-color: rgba(56, 189, 248, 0.35);
+}
+
+QPushButton#unitToggleBtn, QPushButton#langToggleBtn {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 rgba(56, 189, 248, 0.15), stop:1 rgba(99, 102, 241, 0.18));
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    border-radius: 14px;
+    min-height: 38px;
+    max-height: 38px;
+    padding: 0 16px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+QPushButton#unitToggleBtn:hover, QPushButton#langToggleBtn:hover {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 rgba(56, 189, 248, 0.3), stop:1 rgba(99, 102, 241, 0.35));
+    border-color: #38bdf8;
+    color: #ffffff;
+}
+
+QPushButton.favChip {
+    background-color: rgba(255, 255, 255, 0.07);
+    color: #cbd5e1;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 13px;
+    padding: 4px 14px;
     font-size: 12px;
 }
 
 QPushButton.favChip:hover {
-    background-color: rgba(56, 189, 248, 0.3);
+    background-color: rgba(56, 189, 248, 0.25);
+    border-color: rgba(56, 189, 248, 0.5);
     color: #ffffff;
 }
 
-/* Cards & Frames */
-QFrame#mainCard, QFrame#card, QFrame#statCard, QFrame#bottomFrame {
-    background-color: rgba(15, 23, 42, 0.65);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
+#smartAdviceLabel {
+    font-size: 12px;
+    font-weight: 600;
+    color: #fde047;
+    background-color: rgba(250, 204, 21, 0.12);
+    border: 1px solid rgba(250, 204, 21, 0.25);
+    border-radius: 12px;
+    padding: 5px 14px;
 }
 
-/* Typography */
+QFrame#mainCard, QFrame#card, QFrame#statCard, QFrame#bottomFrame {
+    background-color: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 18px;
+}
+
 QLabel#mainCity {
     font-size: 22px;
     font-weight: 700;
@@ -66,7 +159,7 @@ QLabel#mainCity {
 }
 
 QLabel#mainTemp {
-    font-size: 58px;
+    font-size: 56px;
     font-weight: 800;
     color: #ffffff;
 }
@@ -79,7 +172,7 @@ QLabel#mainSub {
 QLabel#mainTime {
     font-size: 12px;
     color: #64748b;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 QLabel#mainWeatherIcon {
@@ -92,9 +185,8 @@ QLabel#mainCondition {
     color: #38bdf8;
 }
 
-/* Stat Cards */
 QLabel#statIcon {
-    font-size: 18px;
+    font-size: 17px;
 }
 
 QLabel#statTitle {
@@ -104,7 +196,7 @@ QLabel#statTitle {
 }
 
 QLabel#statValue {
-    font-size: 20px;
+    font-size: 21px;
     font-weight: 700;
     color: #ffffff;
 }
@@ -114,16 +206,15 @@ QLabel#statSub {
     color: #94a3b8;
 }
 
-/* Hourly Item */
 QFrame#hourlyItem {
-    background-color: rgba(30, 41, 59, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
+    background-color: rgba(30, 41, 59, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 13px;
 }
 
 QFrame#hourlyItem:hover {
     background-color: rgba(56, 189, 248, 0.18);
-    border-color: rgba(56, 189, 248, 0.5);
+    border-color: rgba(56, 189, 248, 0.45);
 }
 
 QLabel#hourTime {
@@ -132,7 +223,7 @@ QLabel#hourTime {
 }
 
 QLabel#hourIcon {
-    font-size: 20px;
+    font-size: 19px;
 }
 
 QLabel#hourTemp {
@@ -146,9 +237,8 @@ QLabel#hourRain {
     color: #38bdf8;
 }
 
-/* Daily Rows */
 QFrame#dailyRow {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 QLabel#dailyDay {
@@ -177,18 +267,6 @@ QLabel#dailyTemp {
     color: #f8fafc;
 }
 
-/* Smart Advice Pill */
-#smartAdviceLabel {
-    font-size: 12px;
-    font-weight: 600;
-    color: #fde047;
-    background-color: rgba(250, 204, 21, 0.12);
-    border: 1px solid rgba(250, 204, 21, 0.25);
-    border-radius: 12px;
-    padding: 4px 12px;
-}
-
-/* Status Label */
 QLabel#statusLabel {
     font-size: 12px;
     color: #94a3b8;

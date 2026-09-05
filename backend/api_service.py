@@ -18,105 +18,106 @@ API_KEY = os.getenv("OPENWEATHER_API_KEY", "").strip()
 CACHE = {}
 CACHE_TTL = 900
 
-COORDS_CACHE = {
-    "عمان": (31.9552, 35.9450, "عمّان, الأردن"),
-    "amman": (31.9552, 35.9450, "Amman, Jordan"),
-    "السلط": (32.0392, 35.7272, "السلط, الأردن"),
-    "salt": (32.0392, 35.7272, "السلط, الأردن"),
-    "as-salt": (32.0392, 35.7272, "As-Salt, Jordan"),
-    "al-salt": (32.0392, 35.7272, "As-Salt, Jordan"),
-    "إربد": (32.5556, 35.8500, "إربد, الأردن"),
-    "irbid": (32.5556, 35.8500, "Irbid, Jordan"),
-    "الزرقاء": (32.0608, 36.0942, "الزرقاء, الأردن"),
-    "zarqa": (32.0608, 36.0942, "Zarqa, Jordan"),
-    "العقبة": (29.5267, 35.0078, "العقبة, الأردن"),
-    "aqaba": (29.5267, 35.0078, "Aqaba, Jordan"),
-    "دبي": (25.2048, 55.2708, "دبي, الإمارات"),
-    "dubai": (25.2048, 55.2708, "Dubai, UAE"),
-    "الرياض": (24.7136, 46.6753, "الرياض, السعودية"),
-    "riyadh": (24.7136, 46.6753, "Riyadh, Saudi Arabia"),
-    "القاهرة": (30.0444, 31.2357, "القاهرة, مصر"),
-    "cairo": (30.0444, 31.2357, "Cairo, Egypt"),
-    "london": (51.5074, -0.1278, "London, UK"),
-    "tokyo": (35.6895, 139.6917, "Tokyo, Japan")
-}
-
 
 class WeatherProvider:
     CURRENT_URL = "https://api.openweathermap.org/data/2.5/weather"
     FORECAST_URL = "https://api.openweathermap.org/data/2.5/forecast"
     AIR_POLLUTION_URL = "https://api.openweathermap.org/data/2.5/air_pollution"
-    GEO_URL = "https://geocoding-api.open-meteo.com/v1/search"
 
     @staticmethod
     async def resolve_coordinates_async(client: httpx.AsyncClient, query: str) -> tuple:
-        """Resolve city name to coordinates (lat, lon, display_name)"""
         if not query:
             return None, None, ""
 
-        clean_q = query.split(" - ")[0].split(",")[0].strip().lower()
+        clean_q = query.split(" - ")[0].split(",")[0].strip()
 
-        if clean_q in COORDS_CACHE:
-            return COORDS_CACHE[clean_q]
-
-        aliases = {
-            "salt": "As-Salt",
-            "السلط": "As-Salt",
-            "سلط": "As-Salt",
-            "عمان": "Amman",
-            "عَمّان": "Amman"
-        }
-        search_target = aliases.get(clean_q, clean_q)
+        if "بغداد" in clean_q or "baghdad" in clean_q.lower():
+            return 33.3152, 44.3661, "بغداد, العراق"
 
         try:
             close_client = False
             if client is None:
-                client = httpx.AsyncClient(timeout=3.0)
+                client = httpx.AsyncClient(timeout=3.5)
                 close_client = True
 
-            params = {"name": search_target, "count": 8, "language": "ar", "format": "json"}
-            res = await client.get(WeatherProvider.GEO_URL, params=params)
-            results = res.json().get("results", []) if res.status_code == 200 else []
-
-            # Try English search if Arabic results are empty
-            if not results:
-                params["language"] = "en"
-                res_en = await client.get(WeatherProvider.GEO_URL, params=params)
-                results = res_en.json().get("results", []) if res_en.status_code == 200 else []
+            url = "https://photon.komoot.io/api/"
+            params = {"q": clean_q, "limit": 15, "lang": "default"}
+            headers = {"User-Agent": "YoWeather/5.0"}
+            res = await client.get(url, params=params, headers=headers)
 
             if close_client:
                 await client.aclose()
 
-            if results:
-                def sort_key(item):
-                    is_capital = 1 if item.get("feature_code") == "PPLC" else 0
-                    pop = item.get("population", 0) or 0
-                    return (is_capital, pop)
+            if res.status_code == 200:
+                features = res.json().get("features", [])
+                if features:
+                    filtered_features = []
+                    excluded_types = ["mall", "shop", "amenity", "commercial", "supermarket", "parking", "building", "department_store"]
 
-                sorted_results = sorted(results, key=sort_key, reverse=True)
-                loc = sorted_results[0]
-                name = loc.get("name", "")
-                country = loc.get("country", "")
-                display = f"{name}, {country}" if country else name
-                lat, lon = float(loc["latitude"]), float(loc["longitude"])
-                COORDS_CACHE[clean_q] = (lat, lon, display)
-                return lat, lon, display
+                    for item in features:
+                        props = item.get("properties", {})
+                        osm_value = props.get("osm_value", "")
+                        osm_key = props.get("osm_key", "")
+                        name = props.get("name", "")
+                        
+                        if "مول" in name or "Mall" in name:
+                            continue
+                        if osm_value in excluded_types or osm_key in ["shop", "amenity", "leisure", "building"]:
+                            continue
+                        filtered_features.append(item)
+
+                    if not filtered_features:
+                        filtered_features = features
+
+                    def rank_feature(item):
+                        props = item.get("properties", {})
+                        osm_type = props.get("osm_value", "")
+                        name = props.get("name", "")
+                        
+                        score = 0
+                        if osm_type == "capital" or props.get("city") == name:
+                            score += 2000000
+                        elif osm_type == "city":
+                            score += 1000000
+                        elif osm_type == "administrative":
+                            score += 500000
+                        elif osm_type == "locality":
+                            score += 100000
+                        return score
+
+                    sorted_features = sorted(filtered_features, key=rank_feature, reverse=True)
+                    top = sorted_features[0]
+
+                    coords = top.get("geometry", {}).get("coordinates", [0, 0])
+                    props = top.get("properties", {})
+                    name = props.get("name", clean_q)
+                    country = props.get("country", "")
+                    display = f"{name}, {country}" if country else name
+                    return float(coords[1]), float(coords[0]), display
+
         except Exception as err:
-            print("Geocoding lookup error:", err)
+            print("Geocoding error:", err)
 
         return None, None, query
 
     @staticmethod
-    async def fetch_weather_data_async(query: str, lat: float = None, lon: float = None, display_name: str = None) -> dict:
-        """Fetch current weather, forecast and air quality concurrently"""
+    async def fetch_weather_data_async(query: str, lat: float = None, lon: float = None, display_name: str = None, lang: str = "en") -> dict:
         if not API_KEY:
             raise ValueError("OPENWEATHER_API_KEY is missing from .env file")
 
-        cache_key = f"{query}_{lat}_{lon}".lower()
+        if (query and ("بغداد" in query or "baghdad" in query.lower())) or (display_name and ("بغداد" in display_name or "baghdad" in display_name.lower())):
+            lat = 33.3152
+            lon = 44.3661
+            display_name = "بغداد, العراق"
+            query = "Baghdad"
+
+        cache_key = f"{query}_{lat}_{lon}_{lang}".lower()
         if cache_key in CACHE:
             cached_data, timestamp = CACHE[cache_key]
             if time.time() - timestamp < CACHE_TTL:
                 return cached_data
+
+        target_lang = lang
 
         limits = httpx.Limits(max_keepalive_connections=10, max_connections=20)
         async with httpx.AsyncClient(limits=limits, timeout=6.0) as client:
@@ -125,7 +126,7 @@ class WeatherProvider:
                 if not display_name:
                     display_name = resolved_name
 
-            params = {"appid": API_KEY, "units": "metric"}
+            params = {"appid": API_KEY, "units": "metric", "lang": target_lang}
             if lat is not None and lon is not None:
                 params["lat"] = lat
                 params["lon"] = lon
@@ -148,17 +149,15 @@ class WeatherProvider:
             current_data = res_curr.json()
             forecast_data = res_fore.json() if (not isinstance(res_fore, Exception) and res_fore.status_code == 200) else {}
 
-            # Parse AQI
-            aqi_info = {"index": 1, "label": "جيد (Good)"}
+            aqi_info = {"index": 1, "label": "Good"}
             if not isinstance(res_aqi, Exception) and res_aqi and res_aqi.status_code == 200:
                 try:
                     aqi_level = res_aqi.json()["list"][0]["main"]["aqi"]
-                    labels = {1: "ممتاز (Good)", 2: "معتدل (Fair)", 3: "متوسط (Moderate)", 4: "رديء (Poor)", 5: "خطر جداً (Hazardous)"}
-                    aqi_info = {"index": aqi_level, "label": labels.get(aqi_level, "معتدل")}
+                    labels = {1: "Good", 2: "Fair", 3: "Moderate", 4: "Poor", 5: "Hazardous"}
+                    aqi_info = {"index": aqi_level, "label": labels.get(aqi_level, "Fair")}
                 except Exception:
                     pass
 
-        # Calculate time and daylight status for target city
         tz_offset = current_data.get("timezone", 0)
         tz = timezone(timedelta(seconds=tz_offset))
         current_city_time = datetime.now(tz)
@@ -171,39 +170,32 @@ class WeatherProvider:
         sunrise_dt = datetime.fromtimestamp(sunrise_ts, tz=tz) if sunrise_ts else current_city_time
         sunset_dt = datetime.fromtimestamp(sunset_ts, tz=tz) if sunset_ts else current_city_time
 
-        # Determine time phase and sun progress
+        remaining_hours = None
         if sunrise_ts and sunset_ts:
             if current_ts < sunrise_ts - 3600 or current_ts > sunset_ts + 3600:
                 time_phase = "night"
                 sun_progress = 0.0 if current_ts < sunrise_ts else 1.0
-                daylight_status = "ليل (سماء مظلمة)"
             elif sunrise_ts - 3600 <= current_ts <= sunrise_ts + 1800:
                 time_phase = "dawn"
                 sun_progress = 0.1
-                daylight_status = "شروق الشمس"
             elif sunset_ts - 1800 <= current_ts <= sunset_ts + 3600:
                 time_phase = "sunset"
                 sun_progress = 0.95
-                daylight_status = "غروب الشمس"
             else:
                 time_phase = "day"
                 sun_progress = round((current_ts - sunrise_ts) / (sunset_ts - sunrise_ts), 2)
                 remaining_hours = round((sunset_ts - current_ts) / 3600, 1)
-                daylight_status = f"متبقي {remaining_hours} ساعة نهار"
         else:
-            hour = current_city_time.hour
-            time_phase = "day" if 6 <= hour < 18 else "night"
+            time_phase = "day" if 6 <= current_city_time.hour < 18 else "night"
             sun_progress = 0.5
-            daylight_status = "النهار مستمر"
 
         sun_data = {
             "sunrise": sunrise_dt.strftime("%I:%M %p"),
             "sunset": sunset_dt.strftime("%I:%M %p"),
             "progress": sun_progress,
-            "status": daylight_status
+            "remaining_hours": remaining_hours
         }
 
-        # Build hourly & daily arrays
         daily_forecast = []
         hourly_forecast = []
         days_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -236,6 +228,11 @@ class WeatherProvider:
             })
 
         final_city_name = display_name if display_name else current_data.get("name", query)
+        if query and ("بغداد" in query or "baghdad" in query.lower()):
+            final_city_name = "بغداد"
+        elif lang == "ar" and display_name:
+            final_city_name = display_name.split(" - ")[0].split(",")[0].strip()
+
         cond_main = current_data["weather"][0]["main"]
 
         result = {
@@ -256,7 +253,6 @@ class WeatherProvider:
             "humidity": current_data["main"]["humidity"],
             "aqi": aqi_info,
             "sun": sun_data,
-            "uv_index": 0.0,
             "daily": daily_forecast,
             "hourly": hourly_forecast
         }

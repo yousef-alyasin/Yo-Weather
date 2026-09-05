@@ -4,35 +4,34 @@ from api_client import WeatherApiClient
 
 
 class FetchWeatherWorker(QThread):
-    """Worker thread to fetch weather asynchronously without freezing the UI"""
     data_received = Signal(dict)
     error_occurred = Signal(str)
 
-    def __init__(self, city_name: str, lat: float = None, lon: float = None, parent=None):
+    def __init__(self, city_name: str, lat: float = None, lon: float = None, lang: str = "en", parent=None):
         super().__init__(parent)
         self.city_name = city_name
         self.lat = lat
         self.lon = lon
+        self.lang = lang
 
     def run(self):
         try:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             data = loop.run_until_complete(
-                WeatherApiClient.get_weather_async(self.city_name, self.lat, self.lon)
+                WeatherApiClient.get_weather_async(self.city_name, self.lat, self.lon, lang=self.lang)
             )
             loop.close()
 
             if data:
                 self.data_received.emit(data)
             else:
-                self.error_occurred.emit("لم يتم العثور على نتائج للطقس.")
+                self.error_occurred.emit("No weather results found.")
         except Exception as err:
-            self.error_occurred.emit(f"خطأ أثناء جلب البيانات: {str(err)}")
+            self.error_occurred.emit(f"Error fetching data: {str(err)}")
 
 
 class GlobalSearchWorker(QThread):
-    """Worker thread for city autocomplete search suggestions"""
     results_ready = Signal(list)
 
     def __init__(self, query_text: str, parent=None):
@@ -53,7 +52,6 @@ class GlobalSearchWorker(QThread):
 
 
 class AutoLocationWorker(QThread):
-    """Worker thread to detect current user city by IP address"""
     location_found = Signal(dict)
     error_occurred = Signal(str)
 
@@ -72,6 +70,6 @@ class AutoLocationWorker(QThread):
             if loc_data:
                 self.location_found.emit(loc_data)
             else:
-                self.error_occurred.emit("تعذر تحديد الموقع التلقائي.")
+                self.error_occurred.emit("Unable to auto-detect location.")
         except Exception as err:
-            self.error_occurred.emit(f"خطأ في تحديد الموقع: {str(err)}")
+            self.error_occurred.emit(f"Location detection error: {str(err)}")

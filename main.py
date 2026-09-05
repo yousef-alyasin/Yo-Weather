@@ -17,9 +17,9 @@ from frontend.app_window import WeatherApp, get_resource_path
 
 def main():
     app = QApplication(sys.argv)
+    app.setApplicationName("Yo Weather")
     app.setStyle("Fusion")
 
-    # تحديد مسار الأيقونة وتعيينها للتطبيق كاملاً
     icon_path = get_resource_path("app_icon.ico")
     if os.path.exists(icon_path):
         app_icon = QIcon(icon_path)

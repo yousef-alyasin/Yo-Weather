@@ -4,25 +4,23 @@ from PySide6.QtCore import Qt, Signal, QTimer
 from PySide6.QtGui import QPainter, QPen, QColor, QPainterPath, QLinearGradient, QBrush
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
-    QLineEdit, QPushButton, QLabel, QFrame, QScrollArea, QGraphicsDropShadowEffect
+    QLineEdit, QPushButton, QLabel, QFrame, QScrollArea,
+    QGraphicsDropShadowEffect, QSizePolicy
 )
 
 
 class WeatherParticleCanvas(QWidget):
-    """Background widget that draws moving particles (rain, snow, stars)"""
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAttribute(Qt.WA_TransparentForMouseEvents)
         self.particles = []
         self.weather_type = "clear"
 
-        # Frame timer (~40 fps)
         self.anim_timer = QTimer(self)
         self.anim_timer.timeout.connect(self.update_particles)
         self.anim_timer.start(25)
 
     def set_weather_mode(self, weather_type: str):
-        """Reinitialize particles for new weather condition or time"""
         self.weather_type = weather_type.lower()
         self.particles.clear()
         w = max(self.width(), 800)
@@ -41,7 +39,6 @@ class WeatherParticleCanvas(QWidget):
         self.update()
 
     def update_particles(self):
-        """Update particle coordinates each frame"""
         if not self.particles:
             return
         w = self.width()
@@ -61,14 +58,12 @@ class WeatherParticleCanvas(QWidget):
                     p["y"] = -10
                     p["x"] = random.uniform(0, w)
             else:
-                # Slight twinkle for night sky
                 p["alpha"] += random.choice([-2, 2])
                 p["alpha"] = max(40, min(160, p["alpha"]))
 
         self.update()
 
     def paintEvent(self, event):
-        """Draw particles on widget canvas"""
         if not self.particles:
             return
         painter = QPainter(self)
@@ -90,10 +85,9 @@ class WeatherParticleCanvas(QWidget):
 
 
 class SunArcWidget(QWidget):
-    """Custom widget to draw sun position trajectory arc"""
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedHeight(46)
+        self.setFixedHeight(40)
         self.progress = 0.5
 
     def set_progress(self, progress: float):
@@ -110,12 +104,10 @@ class SunArcWidget(QWidget):
         rect_w = w - 2 * padding
         rect_h = (h - 6) * 2
 
-        # Draw dotted trajectory arc
         pen = QPen(QColor(255, 200, 50, 90), 2, Qt.DashLine)
         painter.setPen(pen)
         painter.drawArc(padding, 6, rect_w, rect_h, 0 * 16, 180 * 16)
 
-        # Calculate sun position along the arc
         angle_rad = math.pi * (1.0 - self.progress)
         cx = padding + rect_w / 2.0
         cy = 6 + rect_h / 2.0
@@ -125,7 +117,6 @@ class SunArcWidget(QWidget):
         sun_x = cx + rx * math.cos(angle_rad)
         sun_y = cy - ry * math.sin(angle_rad)
 
-        # Draw sun glow and center circle
         painter.setPen(Qt.NoPen)
         painter.setBrush(QColor(255, 215, 0, 80))
         painter.drawEllipse(int(sun_x - 7), int(sun_y - 7), 14, 14)
@@ -135,11 +126,12 @@ class SunArcWidget(QWidget):
 
 
 class SunTrackerCard(QFrame):
-    """Card containing sunrise, sunset, and sun progression widget"""
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("statCard")
-        self.setFixedHeight(120)
+        self.setAttribute(Qt.WA_StyledBackground, True)
+        self.setMinimumHeight(115)
+        self.setMaximumHeight(135)
 
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(15)
@@ -148,7 +140,7 @@ class SunTrackerCard(QFrame):
         self.setGraphicsEffect(shadow)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(14, 10, 14, 10)
+        layout.setContentsMargins(14, 8, 14, 8)
         layout.setSpacing(2)
 
         top_layout = QHBoxLayout()
@@ -175,19 +167,29 @@ class SunTrackerCard(QFrame):
         layout.addWidget(self.sun_arc)
         layout.addLayout(bot_layout)
 
-    def update_info(self, sun_data: dict):
-        self.sunrise_lbl.setText(f"🌅 {sun_data.get('sunrise', '--')}")
-        self.sunset_lbl.setText(f"🌇 {sun_data.get('sunset', '--')}")
-        self.status_lbl.setText(sun_data.get('status', ''))
+    def set_title(self, text: str):
+        self.title_lbl.setText(text)
+
+    def update_info(self, sun_data: dict, status_text: str = None, lang: str = "en"):
+        sr = sun_data.get('sunrise', '--')
+        ss = sun_data.get('sunset', '--')
+        if lang == "ar":
+            sr = sr.replace("AM", "ص").replace("PM", "م")
+            ss = ss.replace("AM", "ص").replace("PM", "م")
+
+        self.sunrise_lbl.setText(f"🌅 {sr}")
+        self.sunset_lbl.setText(f"🌇 {ss}")
+        self.status_lbl.setText(status_text if status_text is not None else sun_data.get('status', ''))
         self.sun_arc.set_progress(sun_data.get('progress', 0.5))
 
 
 class StatCard(QFrame):
-    """Reusable card for single metrics (wind, humidity, etc.)"""
     def __init__(self, icon: str, title: str, parent=None):
         super().__init__(parent)
         self.setObjectName("statCard")
-        self.setFixedHeight(120)
+        self.setAttribute(Qt.WA_StyledBackground, True)
+        self.setMinimumHeight(80)
+        self.setMaximumHeight(105)
 
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(15)
@@ -196,8 +198,8 @@ class StatCard(QFrame):
         self.setGraphicsEffect(shadow)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 14, 16, 14)
-        layout.setSpacing(4)
+        layout.setContentsMargins(16, 10, 16, 10)
+        layout.setSpacing(2)
 
         top_layout = QHBoxLayout()
         self.icon_lbl = QLabel(icon)
@@ -210,32 +212,36 @@ class StatCard(QFrame):
 
         self.val_lbl = QLabel("--")
         self.val_lbl.setObjectName("statValue")
-        self.sub_lbl = QLabel("--")
+        self.sub_lbl = QLabel("")
         self.sub_lbl.setObjectName("statSub")
 
         layout.addLayout(top_layout)
         layout.addWidget(self.val_lbl)
         layout.addWidget(self.sub_lbl)
 
+    def set_title(self, title: str):
+        self.title_lbl.setText(title)
+
     def update_info(self, value: str, subtext: str = ""):
         self.val_lbl.setText(value)
         self.sub_lbl.setText(subtext)
+        self.sub_lbl.setVisible(bool(subtext))
 
 
 class HourlyItem(QFrame):
-    """Individual clickable forecast hour widget"""
     clicked = Signal(dict)
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("hourlyItem")
+        self.setAttribute(Qt.WA_StyledBackground, True)
         self.setFixedWidth(85)
-        self.setFixedHeight(130)
+        self.setFixedHeight(125)
         self.setCursor(Qt.PointingHandCursor)
         self.hour_data = {}
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(6, 10, 6, 10)
+        layout.setContentsMargins(6, 8, 6, 8)
         layout.setSpacing(4)
         layout.setAlignment(Qt.AlignCenter)
 
@@ -258,9 +264,9 @@ class HourlyItem(QFrame):
             self.clicked.emit(self.hour_data)
         super().mousePressEvent(event)
 
-    def set_data(self, data: dict, is_celsius: bool = True):
+    def set_data(self, data: dict, is_celsius: bool = True, time_display: str = None):
         self.hour_data = data
-        self.time_lbl.setText(data.get("time", "--"))
+        self.time_lbl.setText(time_display if time_display else data.get("time", "--"))
         self.icon_lbl.setText(data.get("icon", "☀️"))
         t = data.get("temp", 0) if is_celsius else round(data.get("temp", 0) * 9/5 + 32)
         self.temp_lbl.setText(f"{t}°")
@@ -268,11 +274,11 @@ class HourlyItem(QFrame):
 
 
 class DailyRow(QFrame):
-    """Single row showing one day from the 7-day forecast"""
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("dailyRow")
-        self.setFixedHeight(50)
+        self.setAttribute(Qt.WA_StyledBackground, True)
+        self.setFixedHeight(46)
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(16, 0, 16, 0)
@@ -280,11 +286,11 @@ class DailyRow(QFrame):
 
         self.day_lbl = QLabel("--")
         self.day_lbl.setObjectName("dailyDay")
-        self.day_lbl.setFixedWidth(50)
+        self.day_lbl.setFixedWidth(65)
 
         self.rain_lbl = QLabel("💧 0%")
         self.rain_lbl.setObjectName("dailyRain")
-        self.rain_lbl.setFixedWidth(60)
+        self.rain_lbl.setFixedWidth(55)
 
         self.icon_lbl = QLabel("☀️")
         self.icon_lbl.setObjectName("dailyIcon")
@@ -304,21 +310,20 @@ class DailyRow(QFrame):
         layout.addStretch()
         layout.addWidget(self.temp_lbl)
 
-    def set_data(self, data: dict, is_celsius: bool = True):
-        self.day_lbl.setText(data.get("day", "--"))
+    def set_data(self, data: dict, is_celsius: bool = True, day_text: str = None, cond_text: str = None):
+        self.day_lbl.setText(day_text if day_text else data.get("day", "--"))
         self.rain_lbl.setText(f"💧 {data.get('rain_prob', 0)}%")
         self.icon_lbl.setText(data.get("icon", "☀️"))
-        self.cond_lbl.setText(data.get("condition", "--"))
+        self.cond_lbl.setText(cond_text if cond_text else data.get("condition", "--"))
         max_t = data.get("max_temp", 0) if is_celsius else round(data.get("max_temp", 0) * 9/5 + 32)
         min_t = data.get("min_temp", 0) if is_celsius else round(data.get("min_temp", 0) * 9/5 + 32)
-        self.temp_lbl.setText(f"{max_t}°  {min_t}°")
+        self.temp_lbl.setText(f"{max_t}°   {min_t}°")
 
 
 class SmoothTempChart(QWidget):
-    """Temperature spline curve with rain probability bars"""
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedHeight(95)
+        self.setFixedHeight(85)
         self.temperatures = []
         self.rain_probs = []
 
@@ -337,7 +342,7 @@ class SmoothTempChart(QWidget):
         w = self.width()
         h = self.height()
         padding_x = 42
-        padding_y = 18
+        padding_y = 16
 
         min_t = min(self.temperatures)
         max_t = max(self.temperatures)
@@ -346,7 +351,6 @@ class SmoothTempChart(QWidget):
         points = []
         step_x = (w - 2 * padding_x) / (len(self.temperatures) - 1)
 
-        # Draw rain bars
         bar_w = 12
         for i, prob in enumerate(self.rain_probs):
             x = padding_x + i * step_x
@@ -360,7 +364,6 @@ class SmoothTempChart(QWidget):
                 painter.setBrush(QBrush(grad_bar))
                 painter.drawRoundedRect(int(x - bar_w / 2), int(bar_y), int(bar_w), int(bar_h), 3, 3)
 
-        # Calculate smooth temperature path
         for i, temp in enumerate(self.temperatures):
             x = padding_x + i * step_x
             y = h - padding_y - ((temp - min_t) / t_range) * (h - 2 * padding_y - 8)
@@ -377,7 +380,6 @@ class SmoothTempChart(QWidget):
             ctrl_y2 = p1[1]
             path.cubicTo(ctrl_x1, ctrl_y1, ctrl_x2, ctrl_y2, p1[0], p1[1])
 
-        # Fill below curve
         fill_path = QPainterPath(path)
         fill_path.lineTo(points[-1][0], h)
         fill_path.lineTo(points[0][0], h)
@@ -388,7 +390,6 @@ class SmoothTempChart(QWidget):
         grad.setColorAt(1, QColor(0, 210, 255, 0))
         painter.fillPath(fill_path, grad)
 
-        # Draw line & data points
         pen = QPen(QColor(0, 210, 255), 2.5)
         painter.setPen(pen)
         painter.drawPath(path)
@@ -400,78 +401,131 @@ class SmoothTempChart(QWidget):
 
 
 class WeatherUI:
-    """Builds and lays out the entire interface"""
     def setup_ui(self, main_window):
         self.main_window = main_window
         self.central_widget = QWidget()
         self.central_widget.setObjectName("centralWidget")
         main_window.setCentralWidget(self.central_widget)
 
-        # Background particle layer
         self.particle_layer = WeatherParticleCanvas(self.central_widget)
         self.particle_layer.lower()
 
         root_layout = QVBoxLayout(self.central_widget)
-        root_layout.setContentsMargins(24, 18, 24, 18)
-        root_layout.setSpacing(12)
+        root_layout.setContentsMargins(0, 0, 0, 16)
+        root_layout.setSpacing(10)
 
-        # Top Bar
-        top_bar = QHBoxLayout()
+        self.title_bar = QFrame()
+        self.title_bar.setObjectName("customTitleBar")
+        self.title_bar.setFixedHeight(38)
+        self.title_bar.setAttribute(Qt.WA_StyledBackground, True)
+        self.title_bar.setLayoutDirection(Qt.LeftToRight)
+
+        title_layout = QHBoxLayout(self.title_bar)
+        title_layout.setContentsMargins(14, 0, 8, 0)
+        title_layout.setSpacing(10)
+
+        self.title_icon = QLabel("🌤️")
+        self.title_icon.setStyleSheet("font-size: 16px;")
+        self.title_text = QLabel("Yo Weather")
+        self.title_text.setObjectName("titleBarText")
+
+        title_layout.addWidget(self.title_icon)
+        title_layout.addWidget(self.title_text)
+        title_layout.addStretch()
+
+        self.btn_min = QPushButton("🗕")
+        self.btn_min.setProperty("class", "titleBtn")
+        self.btn_min.setCursor(Qt.PointingHandCursor)
+
+        self.btn_max = QPushButton("🗖")
+        self.btn_max.setProperty("class", "titleBtn")
+        self.btn_max.setCursor(Qt.PointingHandCursor)
+
+        self.btn_close = QPushButton("✕")
+        self.btn_close.setProperty("class", "titleBtn")
+        self.btn_close.setObjectName("titleBtnClose")
+        self.btn_close.setCursor(Qt.PointingHandCursor)
+
+        title_layout.addWidget(self.btn_min)
+        title_layout.addWidget(self.btn_max)
+        title_layout.addWidget(self.btn_close)
+        root_layout.addWidget(self.title_bar)
+
+        content_container = QWidget()
+        app_layout = QVBoxLayout(content_container)
+        app_layout.setContentsMargins(20, 6, 20, 0)
+        app_layout.setSpacing(12)
+
+        self.top_bar_container = QFrame()
+        self.top_bar_container.setObjectName("topBarContainer")
+        self.top_bar_container.setAttribute(Qt.WA_StyledBackground, True)
+
+        top_bar_shadow = QGraphicsDropShadowEffect(self.top_bar_container)
+        top_bar_shadow.setBlurRadius(24)
+        top_bar_shadow.setColor(QColor(0, 0, 0, 80))
+        top_bar_shadow.setOffset(0, 4)
+        self.top_bar_container.setGraphicsEffect(top_bar_shadow)
+
+        top_bar = QHBoxLayout(self.top_bar_container)
+        top_bar.setContentsMargins(8, 6, 8, 6)
         top_bar.setSpacing(8)
 
         self.city_input = QLineEdit()
         self.city_input.setObjectName("searchInput")
-        self.city_input.setPlaceholderText("🔍 ابحث عن أي مدينة أو دولة في العالم... (اضغط / للبحث)")
         self.city_input.setClearButtonEnabled(True)
 
         self.loc_btn = QPushButton("📍")
         self.loc_btn.setObjectName("toolBtn")
-        self.loc_btn.setToolTip("تحديد موقعي التلقائي (Auto-Detect)")
+        self.loc_btn.setCursor(Qt.PointingHandCursor)
 
         self.fav_btn = QPushButton("⭐")
         self.fav_btn.setObjectName("toolBtn")
-        self.fav_btn.setToolTip("إضافة/إزالة من المفضلة")
+        self.fav_btn.setCursor(Qt.PointingHandCursor)
 
         self.compare_btn = QPushButton("⚖️")
         self.compare_btn.setObjectName("toolBtn")
-        self.compare_btn.setToolTip("مقارنة الطقس بين مدينتين (Dual Compare)")
+        self.compare_btn.setCursor(Qt.PointingHandCursor)
 
         self.unit_btn = QPushButton("°C")
         self.unit_btn.setObjectName("unitToggleBtn")
-        self.unit_btn.setToolTip("التبديل بين مئوي وفهرنهايت")
+        self.unit_btn.setCursor(Qt.PointingHandCursor)
+
+        self.lang_btn = QPushButton("عربي")
+        self.lang_btn.setObjectName("langToggleBtn")
+        self.lang_btn.setCursor(Qt.PointingHandCursor)
 
         top_bar.addWidget(self.city_input, stretch=1)
         top_bar.addWidget(self.loc_btn)
         top_bar.addWidget(self.fav_btn)
         top_bar.addWidget(self.compare_btn)
         top_bar.addWidget(self.unit_btn)
-        root_layout.addLayout(top_bar)
+        top_bar.addWidget(self.lang_btn)
+        app_layout.addWidget(self.top_bar_container)
 
-        # Favorites Chips + Smart Advice
         sub_bar = QHBoxLayout()
+        sub_bar.setSpacing(12)
+
         self.fav_chips_layout = QHBoxLayout()
         self.fav_chips_layout.setSpacing(6)
-        self.fav_chips_layout.setAlignment(Qt.AlignLeft)
 
-        self.smart_advice_lbl = QLabel("💡 جاري قراءة التوصيات اليومية...")
+        self.smart_advice_lbl = QLabel("")
         self.smart_advice_lbl.setObjectName("smartAdviceLabel")
-        self.smart_advice_lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.smart_advice_lbl.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
 
         sub_bar.addLayout(self.fav_chips_layout)
         sub_bar.addStretch()
         sub_bar.addWidget(self.smart_advice_lbl)
-        root_layout.addLayout(sub_bar)
+        app_layout.addLayout(sub_bar)
 
-        # Content Grid
         content_grid = QGridLayout()
-        content_grid.setHorizontalSpacing(16)
-        content_grid.setVerticalSpacing(16)
+        content_grid.setHorizontalSpacing(14)
+        content_grid.setVerticalSpacing(14)
 
-        # Hero Card
         self.hero_card = QFrame()
         self.hero_card.setObjectName("mainCard")
+        self.hero_card.setAttribute(Qt.WA_StyledBackground, True)
         hero_layout = QVBoxLayout(self.hero_card)
-        hero_layout.setContentsMargins(22, 18, 22, 18)
+        hero_layout.setContentsMargins(20, 14, 20, 14)
         hero_layout.setAlignment(Qt.AlignCenter)
 
         self.city_lbl = QLabel("--")
@@ -498,9 +552,8 @@ class WeatherUI:
         hero_layout.addWidget(self.hero_icon)
         hero_layout.addWidget(self.cond_lbl)
 
-        # Stats Column
         stats_layout = QVBoxLayout()
-        stats_layout.setSpacing(10)
+        stats_layout.setSpacing(8)
 
         self.wind_card = StatCard("💨", "Wind Speed")
         self.humidity_card = StatCard("💧", "Humidity")
@@ -510,11 +563,11 @@ class WeatherUI:
         stats_layout.addWidget(self.humidity_card)
         stats_layout.addWidget(self.sun_card)
 
-        # 7-Day Forecast Column
         self.daily_card = QFrame()
         self.daily_card.setObjectName("card")
+        self.daily_card.setAttribute(Qt.WA_StyledBackground, True)
         daily_layout = QVBoxLayout(self.daily_card)
-        daily_layout.setContentsMargins(12, 10, 12, 10)
+        daily_layout.setContentsMargins(12, 8, 12, 8)
         daily_layout.setSpacing(4)
 
         self.daily_rows = []
@@ -530,29 +583,32 @@ class WeatherUI:
         content_grid.setColumnStretch(0, 3)
         content_grid.setColumnStretch(1, 3)
         content_grid.setColumnStretch(2, 4)
-        root_layout.addLayout(content_grid, stretch=1)
+        app_layout.addLayout(content_grid, stretch=1)
 
-        # Bottom Frame (Chart + Hourly List)
         bottom_frame = QFrame()
         bottom_frame.setObjectName("bottomFrame")
+        bottom_frame.setAttribute(Qt.WA_StyledBackground, True)
         bottom_layout = QVBoxLayout(bottom_frame)
-        bottom_layout.setContentsMargins(14, 8, 14, 8)
+        bottom_layout.setContentsMargins(12, 6, 12, 6)
         bottom_layout.setSpacing(4)
 
         self.chart_view = SmoothTempChart()
+        self.chart_view.setLayoutDirection(Qt.LeftToRight)
         bottom_layout.addWidget(self.chart_view)
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setFixedHeight(135)
+        scroll.setFixedHeight(130)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setLayoutDirection(Qt.LeftToRight)
 
         scroll_widget = QWidget()
+        scroll_widget.setLayoutDirection(Qt.LeftToRight)
         self.hourly_layout = QHBoxLayout(scroll_widget)
         self.hourly_layout.setContentsMargins(0, 0, 0, 0)
-        self.hourly_layout.setSpacing(10)
+        self.hourly_layout.setSpacing(8)
 
         self.hourly_items = []
         for _ in range(8):
@@ -562,9 +618,11 @@ class WeatherUI:
 
         scroll.setWidget(scroll_widget)
         bottom_layout.addWidget(scroll)
-        root_layout.addWidget(bottom_frame)
+        app_layout.addWidget(bottom_frame)
 
         self.status_lbl = QLabel("")
         self.status_lbl.setObjectName("statusLabel")
         self.status_lbl.setAlignment(Qt.AlignCenter)
-        root_layout.addWidget(self.status_lbl)
+        app_layout.addWidget(self.status_lbl)
+
+        root_layout.addWidget(content_container, stretch=1)
