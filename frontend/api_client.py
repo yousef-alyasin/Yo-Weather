@@ -9,7 +9,7 @@ BACKEND_DIR = os.path.join(PROJECT_ROOT, "backend")
 if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)
 
-from api_service import WeatherProvider
+from backend.api_service import WeatherProvider
 
 
 class WeatherApiClient:
