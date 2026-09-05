@@ -1,25 +1,32 @@
 import asyncio
 from PySide6.QtCore import QThread, Signal
-from api_client import WeatherApiClient
+from frontend.api_client import WeatherApiClient
 
 
 class FetchWeatherWorker(QThread):
     data_received = Signal(dict)
     error_occurred = Signal(str)
 
-    def __init__(self, city_name: str, lat: float = None, lon: float = None, lang: str = "en", parent=None):
+    def __init__(self, city_name: str, lat: float = None, lon: float = None, lang: str = "en", display_name: str = None, parent=None):
         super().__init__(parent)
         self.city_name = city_name
         self.lat = lat
         self.lon = lon
         self.lang = lang
+        self.display_name = display_name
 
     def run(self):
         try:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             data = loop.run_until_complete(
-                WeatherApiClient.get_weather_async(self.city_name, self.lat, self.lon, lang=self.lang)
+                WeatherApiClient.get_weather_async(
+                    self.city_name, 
+                    lat=self.lat, 
+                    lon=self.lon, 
+                    lang=self.lang, 
+                    display_name=self.display_name
+                )
             )
             loop.close()
 
@@ -34,16 +41,17 @@ class FetchWeatherWorker(QThread):
 class GlobalSearchWorker(QThread):
     results_ready = Signal(list)
 
-    def __init__(self, query_text: str, parent=None):
+    def __init__(self, query_text: str, lang: str = "en", parent=None):
         super().__init__(parent)
         self.query_text = query_text
+        self.lang = lang
 
     def run(self):
         try:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             results = loop.run_until_complete(
-                WeatherApiClient.search_cities_async(self.query_text)
+                WeatherApiClient.search_cities_async(self.query_text, lang=self.lang)
             )
             loop.close()
             self.results_ready.emit(results)

@@ -40,60 +40,32 @@ class WeatherProvider:
                 client = httpx.AsyncClient(timeout=3.5)
                 close_client = True
 
-            url = "https://photon.komoot.io/api/"
-            params = {"q": clean_q, "limit": 15, "lang": "default"}
-            headers = {"User-Agent": "YoWeather/5.0"}
-            res = await client.get(url, params=params, headers=headers)
+            url = "https://api.openweathermap.org/geo/1.0/direct"
+            params = {"q": clean_q, "limit": 1, "appid": API_KEY}
+            res = await client.get(url, params=params)
 
             if close_client:
                 await client.aclose()
 
             if res.status_code == 200:
-                features = res.json().get("features", [])
-                if features:
-                    filtered_features = []
-                    excluded_types = ["mall", "shop", "amenity", "commercial", "supermarket", "parking", "building", "department_store"]
-
-                    for item in features:
-                        props = item.get("properties", {})
-                        osm_value = props.get("osm_value", "")
-                        osm_key = props.get("osm_key", "")
-                        name = props.get("name", "")
-                        
-                        if "مول" in name or "Mall" in name:
-                            continue
-                        if osm_value in excluded_types or osm_key in ["shop", "amenity", "leisure", "building"]:
-                            continue
-                        filtered_features.append(item)
-
-                    if not filtered_features:
-                        filtered_features = features
-
-                    def rank_feature(item):
-                        props = item.get("properties", {})
-                        osm_type = props.get("osm_value", "")
-                        name = props.get("name", "")
-                        
-                        score = 0
-                        if osm_type == "capital" or props.get("city") == name:
-                            score += 2000000
-                        elif osm_type == "city":
-                            score += 1000000
-                        elif osm_type == "administrative":
-                            score += 500000
-                        elif osm_type == "locality":
-                            score += 100000
-                        return score
-
-                    sorted_features = sorted(filtered_features, key=rank_feature, reverse=True)
-                    top = sorted_features[0]
-
-                    coords = top.get("geometry", {}).get("coordinates", [0, 0])
-                    props = top.get("properties", {})
-                    name = props.get("name", clean_q)
-                    country = props.get("country", "")
-                    display = f"{name}, {country}" if country else name
-                    return float(coords[1]), float(coords[0]), display
+                locations = res.json()
+                if locations:
+                    top = locations[0]
+                    lat = top.get("lat")
+                    lon = top.get("lon")
+                    name = top.get("name", clean_q)
+                    country = top.get("country", "")
+                    state = top.get("state", "")
+                    local_names = top.get("local_names", {})
+                    display_name = local_names.get("ar", name)
+                    
+                    parts = [display_name]
+                    if state:
+                        parts.append(state)
+                    if country:
+                        parts.append(country)
+                    display = ", ".join(parts)
+                    return float(lat), float(lon), display
 
         except Exception as err:
             print("Geocoding error:", err)

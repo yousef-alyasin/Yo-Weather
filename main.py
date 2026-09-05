@@ -2,13 +2,8 @@ import sys
 import os
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-FRONTEND_DIR = os.path.join(CURRENT_DIR, "frontend")
-BACKEND_DIR = os.path.join(CURRENT_DIR, "backend")
-
-if FRONTEND_DIR not in sys.path:
-    sys.path.insert(0, FRONTEND_DIR)
-if BACKEND_DIR not in sys.path:
-    sys.path.insert(0, BACKEND_DIR)
+if CURRENT_DIR not in sys.path:
+    sys.path.insert(0, CURRENT_DIR)
 
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon

@@ -9,9 +9,9 @@ from PySide6.QtWidgets import (
     QHBoxLayout, QLabel, QFrame, QApplication
 )
 
-from ui_main import WeatherUI
-from workers import FetchWeatherWorker, GlobalSearchWorker, AutoLocationWorker
-from translations import TRANSLATIONS, CONDITIONS_AR
+from frontend.ui_main import WeatherUI
+from frontend.workers import FetchWeatherWorker, GlobalSearchWorker, AutoLocationWorker
+from frontend.translations import TRANSLATIONS, CONDITIONS_AR
 
 
 def get_resource_path(relative_path: str) -> str:
@@ -428,7 +428,7 @@ class WeatherApp(QMainWindow):
         lat = loc_data.get("lat")
         lon = loc_data.get("lon")
         self.ui.city_input.setText(city)
-        self.fetch_weather_by_coords(city, lat, lon)
+        self.fetch_weather_by_coords(city, lat, lon, display_name=city)
 
     def on_text_edited(self, text: str):
         txt = text.strip()
@@ -444,7 +444,8 @@ class WeatherApp(QMainWindow):
                 self.search_worker.quit()
                 self.search_worker.wait()
 
-            self.search_worker = GlobalSearchWorker(txt, self)
+            # تمرير اللغة للـ GlobalSearchWorker هنا
+            self.search_worker = GlobalSearchWorker(txt, lang=self.lang, parent=self)
             self.search_worker.results_ready.connect(self.update_autocomplete_list)
             self.search_worker.start()
 
@@ -483,7 +484,7 @@ class WeatherApp(QMainWindow):
         city = self.ui.city_input.text().strip()
         if not city:
             return
-        self.fetch_weather_by_coords(city, None, None)
+        self.fetch_weather_by_coords(city, None, None, display_name=city)
 
     def fetch_weather_by_coords(self, city: str, lat: float = None, lon: float = None, display_name: str = None):
         if self.worker and self.worker.isRunning():
@@ -493,9 +494,7 @@ class WeatherApp(QMainWindow):
         t = TRANSLATIONS[self.lang]
         self.ui.status_lbl.setText(t["status_fetching"])
 
-        self.worker = FetchWeatherWorker(city, lat, lon, lang=self.lang, parent=self)
-        if display_name:
-            self.worker.display_name = display_name
+        self.worker = FetchWeatherWorker(city, lat, lon, lang=self.lang, display_name=display_name, parent=self)
             
         self.worker.data_received.connect(self.on_success)
         self.worker.error_occurred.connect(self.on_error)
